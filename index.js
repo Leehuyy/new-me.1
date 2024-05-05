@@ -1,43 +1,78 @@
-const express = require('express')
- require("ejs");
-const app = new express();
+const express = require("express");
+require("ejs"); // Important
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+const {
+    addPost,
+    getPost,
+    updatePost,
+    removePost,
+} = require("./src/routes/post.routes");
 
-// Set template engine 
+const app = express();
+
+// Set template engine
 app.set("view engine", "ejs");
 
-// đăng ký thư mục public
-app.use (express.static('public'));
-app.get ('/', (req, res) => {
-   res.render("index");
+// Connect MongoDB
+try {
+    mongoose.connect("mongodb+srv://lehuy12678:lehuy@cluster0.hst6jam.mongodb.net/");
+    console.log("Connected to MongoDB!");
+} catch (error) {
+    console.log("Cannot connect MongoDB", error);
+}
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Đăng ký thư mục public
+app.use(express.static("public"));
+
+app.get("/posts/new", async (req, res) => {
+    // open create.ejs page
+    res.render("create");
 });
 
-app.get ('/about', (req, res) => {
+app.post("/posts/store", async (req, res) => {
+    // const title = req.body.title;
+    // const body = req.body.body;
+    const { title, body } = req.body; // for short
+    try {
+        const newPost = await addPost(title, body);
+
+        res.status(200).json({
+            status: "success",
+            data: newPost,
+        });
+    } catch (error) {
+        console.log("er:", error);
+        res.status(400).json({
+            status: "error",
+            // error: error,
+            error, // for short
+        });
+    }
+});
+
+app.get("/", (req, res) => {
+    res.render("index");
+});
+
+app.get("/about", (req, res) => {
     res.render("about");
- });
-
- app.get ('/contact', (req, res) => {
+});
+app.get("/contact", (req, res) => {
     res.render("contact");
- });
+});
 
- app.get ('/post', (req, res) => {
+app.get("/post", (req, res) => {
     res.render("post");
- })
+});
+
+app.get("/posts/store", (req, res) => {
+    res.render("create");
+});
 
 app.listen(5000, () => {
-    console.log('App listening on http://localhost:5000');
+    console.log("Go to http://localhost:5000");
 });
-
-
-// const mongoose = request("mongoose");
-// const app = express();
-
-// // set template engine 
-// app.set("view engine", "ejs");
-// // Conect MongooseDB
-// try {
-//     mongoose.connect("mongodb+srv://minhducjavascript:minhduc@cluster0.ob51qdy.mongodb.net/test");   
-// } catch(Error){console.log("Cannot connect MongoDB", error);}
-// const Cat = mongoose.model("Cat", { name: String });
-
-// const kitty = new Cat({ name: "Zildjian" });
-// kitty.save().then(() => console.log("meow"));
